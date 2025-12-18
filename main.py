@@ -1,7 +1,9 @@
 from gacha_state import GachaSession
 from dataclasses import dataclass, fields
 from concurrent.futures import ThreadPoolExecutor, as_completed
-import sys, time
+import os
+import sys
+import time
 
 if sys._is_gil_enabled():
     print(
@@ -66,18 +68,14 @@ def worker(chunk: int) -> result:
     return total_worker_result
 
 
-total_try = 50_000
-num_workers = 5
+total_try = 500_000
+num_workers = min(total_try, os.cpu_count() or 1)
 chunk, remainder = divmod(total_try, num_workers)
 total_result = result()
 
 start_time = time.time()
 with ThreadPoolExecutor(max_workers=num_workers) as ex:
     futures = [ex.submit(worker, chunk + (i < remainder)) for i in range(num_workers)]
-    futures = [ex.submit(worker, chunk) for _ in range(num_workers)]
-    if remainder > 0:
-        futures.append(ex.submit(worker, remainder))
-
     for workers in as_completed(futures):
         worker_result: result = workers.result()
         for f in fields(result):
