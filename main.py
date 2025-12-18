@@ -1,17 +1,17 @@
 from gacha_state import GachaSession
 from dataclasses import dataclass, fields
 from concurrent.futures import ThreadPoolExecutor, as_completed
-import sys
+import sys, time
 
 if sys._is_gil_enabled():
     print(
         "GIL이 켜져 있습니다."
         "\n멀티스레드를 활용하기 위해서는 Python 3.14.x free-threaded 빌드가 필요합니다."
         "\npy install 3.14t 를 사용하여 설치할 수 있습니다."
-        "\npython3.14t.exe '파일경로'로 실행할 수 있습니다.\n"
+        "\npython3.14t.exe '파일경로'로 실행할 수 있습니다."
     )
 else:
-    print("GIL이 꺼져 있습니다. \n멀티스레드가 의도대로 동작합니다.")
+    print("GIL이 꺼져 있습니다.\n멀티스레드가 의도대로 동작합니다.")
 
 
 @dataclass
@@ -66,10 +66,12 @@ def worker(chunk: int) -> result:
     return total_worker_result
 
 
-total_try = 5_000
+total_try = 50_000
 num_workers = 5
 chunk, remainder = divmod(total_try, num_workers)
 total_result = result()
+
+start_time = time.time()
 with ThreadPoolExecutor(max_workers=num_workers) as ex:
     futures = [ex.submit(worker, chunk + (i < remainder)) for i in range(num_workers)]
     futures = [ex.submit(worker, chunk) for _ in range(num_workers)]
@@ -90,6 +92,8 @@ for f in fields(result):
         f.name,
         getattr(total_result, f.name) / total_try,
     )
+end_time = time.time()
+total_time = end_time - start_time
 
 str_list = [
     "평균 캐릭터 가챠 횟수:",
@@ -100,5 +104,6 @@ str_list = [
     "명함 이후 평균 가챠 수:",
     "명함을 먹은 시점의 평균:",
 ]
+print("\n\n시도 횟수:", total_try, "소요시간:", total_time)
 for f, st in zip(fields(result), str_list):
     print(st, getattr(total_result, f.name))
