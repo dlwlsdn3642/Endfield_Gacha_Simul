@@ -129,7 +129,7 @@ class GachaSession:
         P_LIMITED_GIVEN_6 = 0.25
 
         if self.player.weapon_gacha_resource < COST:
-            return
+            return -1
         self.player.weapon_gacha_resource -= COST
 
         any_six = False
@@ -170,5 +170,6 @@ class GachaSession:
                 banner.limited_weapon_pity += 1
         else:
             banner.weapon_pity += 1
+            banner.limited_weapon_pity += 1
 
         self.player.total_weapon_runs += 1
